@@ -1,17 +1,16 @@
-# aiui
-Simple AI Bot 
+# Simple AI Bot 
 
 ---
 
 Tech Stack:
 
-Frontend
+Frontend.
 HTMX, CSS (Bootstrap 5), a little Vanilla JS
 
-Backend 
+Backend:
 PHP, MySQL
 
-AI
+AI:
 OpenAI
 
 ---
@@ -25,7 +24,7 @@ Generelle Info
 
 Authentication & simples Backend
 
-Da unser "old-school" Apache Webserver immer noch läuft, war es einfacher auf das LAMP-Stack zuzugreifen. Für einen simplen Protoytp reicht das und HTMX vereinfacht wenigstens das Fronent. Security scheint soweit in Ordnung. Sanitation findet stat. Genauere Security-Prüfung sicher nicht schlecht.
+Da unser "old-school" Apache Webserver immer noch läuft, war es einfacher auf das LAMP-Stack zuzugreifen. Für einen simplen Protoytp reicht das und HTMX vereinfacht wenigstens das Frontend. Security scheint soweit in Ordnung (Basic Checks durchgeführt, allen voran Prüfung der Sanitation). Genauere Security-Prüfung sicher nicht schlecht.
 
 Frontend
 
