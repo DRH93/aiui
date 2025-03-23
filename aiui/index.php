@@ -1,13 +1,24 @@
 <?php
 session_start();
 
-// var_dump($_SESSION['active_parameters']);
+// Enhance session security
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.use_strict_mode', '1');
+
+// Authentication check
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-   header('Location: public/authentication.php');
-   exit;
+    header('Location: public/authentication.php');
+    exit;
 }
 
-$email = $_SESSION['loginEmail'];
+// Regenerate session ID on login
+if (!isset($_SESSION['session_initialized'])) {
+    session_regenerate_id(true);
+    $_SESSION['session_initialized'] = true;
+}
+
+$email = htmlspecialchars($_SESSION['loginEmail'], ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
@@ -18,12 +29,13 @@ $email = $_SESSION['loginEmail'];
     <title>Homemade AI Chatbot</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.js" integrity="sha512-gz6WNAiOHmX2hYyqxZLXxWn/tnyWxrvDa8v820IMtAJf5vAvVkbEP6zRxgSab0oID9rMxqzZdAjbFpZrNRaBUw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
     <div class="container mt-5">
 
         <!-- Main Content Section -->
-        <div id="Content">
+        <main id="Content">
             <h1 class="display-4">AI Bot</h1><hr>
 
             <div class="row mb-4">
@@ -31,13 +43,13 @@ $email = $_SESSION['loginEmail'];
                     <!-- Message Input -->
                     <div class="mb-4">
                         <h2>Nachricht</h2>
-                        <h5 class="mb-2" style="color:lightgrey;">Was willst du wissen?</h5>
+                        <h5 class="mb-2 text-black-50">Was willst du wissen?</h5>
                         <textarea class="form-control" id="messageInput" rows="4" placeholder="Nachricht hier eintippen"></textarea>
                     </div>
                     <!-- Input for Parameters -->
                     <div class="mb-4">
                         <h2 >Parameters</h2>
-                        <h5 class="mb-2" style="color:lightgrey;"> Was soll der AI Bot in seiner Antwort beachten?</h5>
+                        <h5 class="mb-2 text-black-50"> Was soll der AI Bot in seiner Antwort beachten?</h5>
                         <div class="row mb-4">
                             <div class="col-10">
                             <input class="form-control" id="parameterInput" name="parameterInput" placeholder="Parameter hier eintippen" 
@@ -58,7 +70,7 @@ $email = $_SESSION['loginEmail'];
                             Hinzufügen
                             </button>
                         </div>
-                        <div class="form-text mb-2">"Ich bin <?php echo $email ?>", "Sei immer höflich", etc.</div>
+                        <div class="form-text mb-2">"Ich bin <?= htmlspecialchars($email, ENT_QUOTES, 'UTF-8') ?>", "Sei immer höflich", etc.</div>
                              <!-- Display Added Parameters -->
                         <div id="parameterList" 
                                  hx-get="/aiui/backend/api/manage_parameters.php" 
@@ -72,7 +84,7 @@ $email = $_SESSION['loginEmail'];
                 <!-- Right Column: Response History -->
                 <div class="col-12 col-md-6 order-1 order-md-2">
                     <h2>Meine Fragen</h2>
-                    <h5 class="mb-2" style="color:lightgrey">Bisherige Fragen an den Bot. Klick darauf für Details...</h5>
+                    <h5 class="mb-2 text-black-50">Bisherige Fragen an den Bot. Klick darauf für Details...</h5>
                     <div id="responseHistory" 
                          hx-get="/aiui/backend/api/manage_history.php" 
                          hx-swap="innerHTML" 
@@ -104,7 +116,7 @@ $email = $_SESSION['loginEmail'];
                 <h5>AI Bot:</h5>
                 <div id="responseContent">Die Antwort erscheint hier.</div>
             </div>
-        </div>
+        </main>
     </div>
     
 
@@ -112,37 +124,27 @@ $email = $_SESSION['loginEmail'];
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.2"></script>
     <script>
 
-    /*
-        document.addEventListener("keyup", function (event) {
+        function sanitizeInput(input) {
+            return input.replace(/[^a-zA-Z0-9 ]/g, ''); // Remove any special characters
+        }
 
-            if (event.key === "Enter") {
-                console.log("first function");
-                const input = document.getElementById("parameterInput");
-                const vals = JSON.stringify({ action: "add", parameterInput: input.value });
-                console.log("hx-vals:", vals); // Check the JSON structure here
-            }
-        });
-    */
-
-        // Add event listeners for dynamically setting hx-vals
         document.getElementById('parameterInput').addEventListener('keyup', function (event) {
-            console.log("Second function triggered by Enter key");
-            if (event.key === 'Enter' && this.value.trim() !== '') {
-                // Dynamically set hx-vals before the HTMX request
+            const sanitizedValue = sanitizeInput(this.value.trim());
+            if (event.key === 'Enter' && sanitizedValue !== '') {
                 this.setAttribute('hx-vals', JSON.stringify({
                     action: 'add',
-                    parameterInput: this.value
+                    parameterInput: sanitizedValue
                 }));
                 document.getElementById('parameterButton').setAttribute('hx-vals', JSON.stringify({
                     action: 'add',
-                    parameterInput: this.value
+                    parameterInput: sanitizedValue
                 }));
             }
         });
 
+
         // Add event listener for parameterButton click
         document.getElementById('parameterButton').addEventListener('click', function () {
-            console.log("Parameter button clicked");
             const parameterInputValue = document.getElementById('parameterInput').value.trim();
             if (parameterInputValue !== '') {
                 // Dynamically set hx-vals before the HTMX request
@@ -153,27 +155,32 @@ $email = $_SESSION['loginEmail'];
             }
         });
 
-        // Add HTMX event listeners for button control and loading animation
         document.addEventListener("htmx:configRequest", function (event) {
-           // Check if the event target is the Get AI Response button
             const button = document.getElementById("aiRequestButton");
-            if (event.target === button) {
-                // Disable the button when the request starts
+            const aiResponseDiv = document.getElementById("aiResponse");
+            if (event.target === button && aiResponseDiv) {
                 button.disabled = true;
-                // Add loading animation to the AI response section
-                const aiResponseDiv = document.getElementById("aiResponse");
-                aiResponseDiv.innerHTML = `
-                    <h5>AI Response:</h5>
-                    <div class="d-flex align-items-center">
-                        <strong>Laden! Das sollte ganz zackig gehen...</strong>
-                        <div class="spinner-border ms-3" role="status" aria-hidden="true"></div>
-                    </div>
+
+                // Create and append loading animation
+                aiResponseDiv.textContent = "";
+                const loadingDiv = document.createElement("div");
+                loadingDiv.className = "d-flex align-items-center";
+                loadingDiv.innerHTML = `
+                    <strong>Einen Moment Bitte. Das sollte ganz zackig gehen...</strong>
+                    <div class="spinner-border ms-3" role="status" aria-hidden="true"></div>
                 `;
+                aiResponseDiv.appendChild(loadingDiv);
             }
         });
 
-        document.addEventListener("htmx:afterRequest", function (event) {
 
+        function sanitizeHTML(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str; // Automatically escapes potentially dangerous content
+            return temp.innerHTML;
+        }
+
+        document.addEventListener("htmx:afterRequest", function (event) {
             // Check if the event target is the Get AI Response button
             const button = document.getElementById("aiRequestButton");
             if (event.target === button) {
@@ -182,7 +189,8 @@ $email = $_SESSION['loginEmail'];
 
                         // Update the AI response field
                         if (response.aiResponse) {
-                            document.getElementById("aiResponse").innerHTML = response.aiResponse;
+                            const cleanHTML = DOMPurify.sanitize(response.aiResponse);
+                            document.getElementById("aiResponse").innerHTML = cleanHTML;
                         }
 
                         // Update the response history
@@ -202,7 +210,6 @@ $email = $_SESSION['loginEmail'];
             if (inputField) {
                 inputField.value = '';
             }
-
         });
 
         document.addEventListener("htmx:afterSwap", function (event) {
@@ -212,17 +219,6 @@ $email = $_SESSION['loginEmail'];
 
                 // Update the input field with the sent message
                 document.getElementById("messageInput").value = data.sent_message;
-
-                /* Populate the parameters list -> active parameters stored in session
-                const parameterList = document.getElementById("parameterList");
-                parameterList.innerHTML = ""; // Clear the current list
-                data.parameters.forEach(parameter => {
-                    const paramDiv = document.createElement("div");
-                    paramDiv.className = "badge bg-primary text-white me-2";
-                    paramDiv.innerText = parameter;
-                    parameterList.appendChild(paramDiv);
-                });
-                */
 
                 // Update the AI response
                 const aiResponse = document.getElementById("aiResponse");

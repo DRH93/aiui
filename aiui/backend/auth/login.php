@@ -4,6 +4,18 @@ session_start();
 require_once '/var/www/html/aiui/backend/config.php';
 //require_once __DIR__ . '/config.php';
 
+// Check if CSRF token is valid
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    http_response_code(403); // Forbidden
+    die("CSRF token validation failed.");
+}
+
+// Invalidate old CSRF token
+unset($_SESSION['csrf_token']);
+
+// Generate a new token
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['loginEmail'] ?? null;
     $password = $_POST['loginPassword'] ?? null;

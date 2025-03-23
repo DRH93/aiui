@@ -6,6 +6,10 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     header('Location: index.php');
     exit;
 }
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 
 <!DOCTYPE html>

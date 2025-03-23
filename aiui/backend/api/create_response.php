@@ -3,7 +3,6 @@ session_start();
 
 require_once '/var/www/html/aiui/backend/config.php';
 
-
 class OpenAIHandler {
     private $apiKey;
 
@@ -16,7 +15,7 @@ class OpenAIHandler {
 
     public function callOpenAI($userMessage, $parameters) {
         $url = 'https://api.openai.com/v1/chat/completions';
-        $parametersString = implode(', ', array_column($parameters, 'parameter_name')); // Combine parameter names
+        $parametersString = implode(', ', array_column($parameters, 'parameter_name'));
 
         $data = [
             "model" => "gpt-4o-mini", // Replace with the desired model

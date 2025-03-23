@@ -36,8 +36,8 @@ while ($row = $result->fetch_assoc()) {
             hx-swap='none'
             hx-trigger='click'
             style='cursor: pointer;'>
-            <strong>Nachricht:</strong> $sentMessage...<br>
-            <strong>Antwort:</strong> $response...<br>
+            <strong>Nachricht:</strong> $sentMessage<br>
+            <strong>Antwort:</strong> $response<br>
             <span class='text-muted'>$timestamp</span>
         </li>
     ";

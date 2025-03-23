@@ -8,10 +8,11 @@
         <label for="registerPassword" class="form-label">Passwort</label>
         <input type="password" class="form-control" id="registerPassword" name="registerPassword" placeholder="Passwort eingeben...">
     </div>
+    <input type="hidden" id="csrf_token" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
     <button class="btn btn-primary"
             hx-post="../backend/auth/register.php"
             hx-target="#authSection"
-            hx-include="#registerEmail,#registerPassword">
+            hx-include="#registerEmail,#registerPassword,#csrf_token">
         Registrieren
     </button>
     <div class="form-text mt-3">Hast du bereits einen Account? <a href="#" hx-get="../forms/login_form.php" hx-target="#authSection">Hier einloggen</a></div>
